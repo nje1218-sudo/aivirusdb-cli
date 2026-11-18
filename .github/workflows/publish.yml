@@ -26,7 +26,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-          registry-url: "https://registry.npmjs.org"
+          # No registry-url: that writes an .npmrc with a placeholder
+          # NODE_AUTH_TOKEN, which npm can fall back to instead of OIDC.
       - name: Tag must match package.json version
         env:
           TAG: ${{ github.event.release.tag_name }}
@@ -47,4 +48,5 @@ jobs:
       - run: npm test
       - run: npm run build
       - name: Publish
-        run: npm publish --access public
+        # verbose logging shows why npm accepts or rejects the OIDC exchange
+        run: npm publish --access public --loglevel verbose

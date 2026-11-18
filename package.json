@@ -1,6 +1,6 @@
 {
   "name": "aivirusdb",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Pre-flight security scan for AI agent projects: MCP configs, Agent Skills and rule files, and permission sets.",
   "license": "Apache-2.0",
   "type": "module",
