@@ -41,18 +41,44 @@ The rules are heuristics: a match means a person should look.
 ```text
 aivirusdb scan [dir] [options]
 
-  --json                 Machine-readable JSON output
+  --json                 Machine-readable JSON output (same as --format json)
+  --format <format>      text | json | github (annotations + job summary)
   --fail-on <level>      critical | high | medium | low | none (default: high)
   --github-scopes <list> Comma-separated GitHub OAuth scopes the agent holds
   --api-url <url>        Override the advisory API endpoint
 ```
 
 Exit codes: `0` nothing at or above `--fail-on`, `1` issues at or above it, `2` usage or runtime error.
-That makes it usable as a CI step:
+
+## GitHub Action
+
+Block pull requests that add a risky MCP server, skill or rule file. Findings appear as
+annotations on the PR diff and as a table in the job summary.
 
 ```yaml
-- run: npx aivirusdb@0.1.0 scan . --fail-on high
+name: AIVirusDB
+on: [pull_request]
+permissions:
+  contents: read
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: nje1218-sudo/aivirusdb-cli@main   # pin to a release tag or commit SHA
+        with:
+          fail-on: high                          # critical | high | medium | low | none
+          # github-scopes: repo,workflow         # scopes your agent's token holds
+          # api-key: ${{ secrets.AIVIRUSDB_API_KEY }}  # optional advisory lookup
 ```
+
+Inputs: `path` (default `.`), `fail-on` (default `high`), `github-scopes`, `api-key`.
+Output: `exit-code`. The action builds the scanner from its own source, so it does not
+download anything from npm at run time. In any other CI, run the CLI with
+`--format github` (GitHub) or `--json`.
 
 ## Known-advisory lookup (optional)
 

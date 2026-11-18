@@ -1,0 +1,64 @@
+name: AIVirusDB scan
+description: >-
+  Pre-flight security scan for AI agent projects. Checks MCP configs, Agent
+  Skills and rule files, and optionally a GitHub scope set, and fails the job
+  when findings reach the chosen severity.
+author: AIVirusDB
+branding:
+  icon: shield
+  color: red
+
+inputs:
+  path:
+    description: Directory to scan, relative to the repository root.
+    required: false
+    default: "."
+  fail-on:
+    description: Fail when a finding is at or above this level (critical, high, medium, low, none).
+    required: false
+    default: high
+  github-scopes:
+    description: Comma-separated GitHub OAuth scopes held by the agent's token, to check for risky combinations.
+    required: false
+    default: ""
+  api-key:
+    description: >-
+      Optional AIVirusDB API key (pass it from a secret). Enables the known-advisory
+      lookup for MCP packages. Only package names and versions are sent.
+    required: false
+    default: ""
+
+outputs:
+  exit-code:
+    description: 0 when nothing reached fail-on, 1 when something did.
+    value: ${{ steps.scan.outputs.exit-code }}
+
+runs:
+  using: composite
+  steps:
+    - name: Build the scanner from this action's source
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: |
+        set -euo pipefail
+        npm ci --no-audit --no-fund --loglevel=error
+        npm run build --silent
+
+    - name: Scan
+      id: scan
+      shell: bash
+      working-directory: ${{ github.workspace }}
+      env:
+        AIVIRUSDB_API_KEY: ${{ inputs.api-key }}
+        INPUT_PATH: ${{ inputs.path }}
+        INPUT_FAIL_ON: ${{ inputs.fail-on }}
+        INPUT_GITHUB_SCOPES: ${{ inputs.github-scopes }}
+        ACTION_PATH: ${{ github.action_path }}
+      run: |
+        set -uo pipefail
+        args=(scan "$INPUT_PATH" --format github --fail-on "$INPUT_FAIL_ON")
+        if [ -n "$INPUT_GITHUB_SCOPES" ]; then args+=(--github-scopes "$INPUT_GITHUB_SCOPES"); fi
+        node "$ACTION_PATH/dist/cli.js" "${args[@]}"
+        code=$?
+        echo "exit-code=$code" >> "$GITHUB_OUTPUT"
+        exit "$code"
