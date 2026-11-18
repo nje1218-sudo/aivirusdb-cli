@@ -4,12 +4,31 @@
   "description": "Pre-flight security scan for AI agent projects: MCP configs, Agent Skills and rule files, and permission sets.",
   "license": "Apache-2.0",
   "type": "module",
-  "bin": { "aivirusdb": "dist/cli.js" },
-  "files": ["dist", "LICENSE", "README.md"],
-  "engines": { "node": ">=20" },
-  "repository": { "type": "git", "url": "https://github.com/nje1218-sudo/aivirusdb-cli.git" },
+  "bin": {
+    "aivirusdb": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nje1218-sudo/aivirusdb-cli.git"
+  },
   "homepage": "https://www.aivirusdb.com",
-  "keywords": ["mcp", "ai-agent", "security", "skills", "cursorrules", "supply-chain", "owasp"],
+  "keywords": [
+    "mcp",
+    "ai-agent",
+    "security",
+    "skills",
+    "cursorrules",
+    "supply-chain",
+    "owasp"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "check": "tsc --noEmit",
