@@ -1,0 +1,24 @@
+{
+  "name": "aivirusdb",
+  "version": "0.1.0",
+  "description": "Pre-flight security scan for AI agent projects: MCP configs, Agent Skills and rule files, and permission sets.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "bin": { "aivirusdb": "dist/cli.js" },
+  "files": ["dist", "LICENSE", "README.md"],
+  "engines": { "node": ">=20" },
+  "repository": { "type": "git", "url": "https://github.com/nje1218-sudo/aivirusdb-cli.git" },
+  "homepage": "https://www.aivirusdb.com",
+  "keywords": ["mcp", "ai-agent", "security", "skills", "cursorrules", "supply-chain", "owasp"],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "check": "tsc --noEmit",
+    "test": "vitest run",
+    "prepublishOnly": "npm run check && npm test && npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "typescript": "6.0.3",
+    "vitest": "4.1.12"
+  }
+}
