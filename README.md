@@ -114,6 +114,12 @@ npm run build   # dist/
 
 `src/engine/` is the shared scan engine also used by the AIVirusDB API.
 
+## Releasing
+
+Publishing a GitHub Release whose tag is `v<version>` (matching `package.json`) runs
+`.github/workflows/publish.yml`, which tests, builds and publishes to npm with provenance.
+It needs an `NPM_TOKEN` repository secret and runs in the `npm` environment.
+
 ## License
 
 Apache-2.0. The license covers this code; it does not grant use of the AIVirusDB name or logo.
