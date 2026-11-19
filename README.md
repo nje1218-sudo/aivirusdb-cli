@@ -117,11 +117,17 @@ npm run build   # dist/
 ## Releasing
 
 Publishing a GitHub Release whose tag is `v<version>` (matching `package.json`) runs
-`.github/workflows/publish.yml`, which tests, builds and publishes to npm with provenance.
-npm tries Trusted Publishing (OIDC) first: npmjs.com trusts this repository, `publish.yml` and the
-`npm` environment. Until that exchange works, npm falls back to the `NPM_TOKEN` secret of the `npm`
-environment; the token is removed once a publish log shows the OIDC exchange succeeding.
-Provenance is attached automatically.
+`.github/workflows/publish.yml`. It tests and builds, then **stages** the version on npm with
+provenance (`npm stage publish`); nothing is public yet. A maintainer approves it with 2FA:
+
+```bash
+npm stage list aivirusdb
+npm stage approve <stage-id>
+```
+
+CI uses a granular npm token without bypass 2FA, which can stage but not publish. npm Trusted
+Publishing (OIDC) is tried first but does not work yet for this repository
+([npm/cli#9969](https://github.com/npm/cli/issues/9969)).
 
 ## License
 
