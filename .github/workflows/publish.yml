@@ -3,9 +3,11 @@ name: Publish to npm
 # Publishes when a GitHub Release is published. The release tag must be
 # v<package.json version>, e.g. v0.1.0.
 #
-# Authentication is npm Trusted Publishing (OIDC): npmjs.com trusts this
-# repository + workflow file + the `npm` environment, so no npm token is
-# stored in GitHub. Provenance is attached automatically.
+# Authentication: npm tries Trusted Publishing (OIDC) first. npmjs.com trusts
+# this repository + workflow file + the `npm` environment. If the OIDC
+# exchange is refused, npm falls back to the NPM_TOKEN secret of the `npm`
+# environment (temporary, Owner decision 2026-11-19: remove it once a publish
+# log shows the OIDC exchange succeeding). Provenance is attached automatically.
 on:
   release:
     types: [published]
@@ -48,5 +50,12 @@ jobs:
       - run: npm test
       - run: npm run build
       - name: Publish
-        # verbose logging shows why npm accepts or rejects the OIDC exchange
-        run: npm publish --access public --loglevel verbose
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        # verbose logging shows whether the OIDC exchange or the token was used
+        run: |
+          set -euo pipefail
+          npmrc="$RUNNER_TEMP/publish.npmrc"
+          # The file holds a reference to the variable, not the token itself.
+          printf '%s\n' '//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}' > "$npmrc"
+          NPM_CONFIG_USERCONFIG="$npmrc" npm publish --access public --provenance --loglevel verbose

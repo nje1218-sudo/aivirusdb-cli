@@ -118,8 +118,10 @@ npm run build   # dist/
 
 Publishing a GitHub Release whose tag is `v<version>` (matching `package.json`) runs
 `.github/workflows/publish.yml`, which tests, builds and publishes to npm with provenance.
-It uses npm Trusted Publishing (OIDC), so no npm token is stored in GitHub: npmjs.com trusts
-this repository, `publish.yml` and the `npm` environment. Provenance is attached automatically.
+npm tries Trusted Publishing (OIDC) first: npmjs.com trusts this repository, `publish.yml` and the
+`npm` environment. Until that exchange works, npm falls back to the `NPM_TOKEN` secret of the `npm`
+environment; the token is removed once a publish log shows the OIDC exchange succeeding.
+Provenance is attached automatically.
 
 ## License
 
