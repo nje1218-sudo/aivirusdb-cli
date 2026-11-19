@@ -3,11 +3,17 @@ name: Publish to npm
 # Publishes when a GitHub Release is published. The release tag must be
 # v<package.json version>, e.g. v0.1.0.
 #
-# Authentication: npm tries Trusted Publishing (OIDC) first. npmjs.com trusts
-# this repository + workflow file + the `npm` environment. If the OIDC
-# exchange is refused, npm falls back to the NPM_TOKEN secret of the `npm`
-# environment (temporary, Owner decision 2026-11-19: remove it once a publish
-# log shows the OIDC exchange succeeding). Provenance is attached automatically.
+# Staged publishing (Owner decision 2026-11-19): CI runs `npm stage publish`,
+# which places the version in the registry without making it public. A
+# maintainer then approves it with 2FA (`npm stage list` + `npm stage approve
+# <id>`), and only then is it published. CI therefore never holds a credential
+# that can publish on its own.
+#
+# Authentication: npm tries Trusted Publishing (OIDC) first. That currently
+# fails for this repo (npm/cli#9969: repos created after 2026-07-15 send an
+# immutable OIDC subject npm does not match yet), so npm falls back to the
+# NPM_TOKEN secret of the `npm` environment: a granular token WITHOUT bypass
+# 2FA, which can stage but not publish. Provenance is attached.
 on:
   release:
     types: [published]
@@ -40,7 +46,7 @@ jobs:
             echo "::error::Release tag $TAG does not match package.json $version"
             exit 1
           fi
-      - name: npm CLI new enough for Trusted Publishing (>= 11.5.1)
+      - name: npm CLI new enough for staged publishing (>= 11.15.0)
         run: |
           set -euo pipefail
           npm install -g npm@11
@@ -49,7 +55,7 @@ jobs:
       - run: npm run check
       - run: npm test
       - run: npm run build
-      - name: Publish
+      - name: Stage for approval
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         # verbose logging shows whether the OIDC exchange or the token was used
@@ -58,4 +64,16 @@ jobs:
           npmrc="$RUNNER_TEMP/publish.npmrc"
           # The file holds a reference to the variable, not the token itself.
           printf '%s\n' '//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}' > "$npmrc"
-          NPM_CONFIG_USERCONFIG="$npmrc" npm publish --access public --provenance --loglevel verbose
+          NPM_CONFIG_USERCONFIG="$npmrc" npm stage publish --access public --provenance --loglevel verbose
+      - name: Next step for the maintainer
+        run: |
+          {
+            echo "## Staged, not yet published"
+            echo ""
+            echo "Approve with 2FA to publish \`$(node -p 'require("./package.json").name')@$(node -p 'require("./package.json").version')\`:"
+            echo ""
+            echo '```bash'
+            echo "npm stage list aivirusdb"
+            echo "npm stage approve <stage-id>"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
